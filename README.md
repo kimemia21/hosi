@@ -60,10 +60,10 @@ npm start
 This project is licensed under the **MIT License**.
 
 ## 🙌 Contributors
-- **Your Name** - [GitHub](https://github.com/yourusername)
+- **Your Name** - [GitHub](https://github.com/kimemia21)
 
 ## 📧 Contact
-For any inquiries, reach out at **your.email@example.com**.
+For any inquiries, reach out at **thukukimemiadavid@gmail.com**.
 
 ---
 
