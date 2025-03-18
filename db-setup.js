@@ -7,6 +7,7 @@ const dbHost = process.env.DB_HOST;
 const dbUser = process.env.DB_USER;
 const dbPass = process.env.DB_PASS;
 
+
 async function setupDatabase() {
   // Read the SQL schema file
   const schemaSQL = fs.readFileSync('./hospital-schema.sql', 'utf8');

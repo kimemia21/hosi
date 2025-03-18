@@ -213,6 +213,8 @@ CREATE TABLE medical_history (
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
 );
 
+
+
 -- Audit Log Table
 CREATE TABLE audit_logs (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -225,6 +227,91 @@ CREATE TABLE audit_logs (
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES staff(staff_id)
 );
+-- Users Table for Authentication
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    staff_id INT NOT NULL UNIQUE,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    salt VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login DATETIME,
+    password_reset_token VARCHAR(100),
+    password_reset_expires DATETIME,
+    failed_login_attempts INT DEFAULT 0,
+    account_locked BOOLEAN DEFAULT FALSE,
+    account_locked_until DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id) ON DELETE CASCADE
+);
+
+-- Roles Table
+CREATE TABLE roles (
+    role_id INT PRIMARY KEY AUTO_INCREMENT,
+    role_name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- User Roles (Many-to-Many relationship)
+CREATE TABLE user_roles (
+    user_role_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    role_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_role (user_id, role_id)
+);
+
+
+-- Permissions Table
+CREATE TABLE permissions (
+    permission_id INT PRIMARY KEY AUTO_INCREMENT,
+    permission_name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Role Permissions (Many-to-Many relationship)
+CREATE TABLE role_permissions (
+    role_permission_id INT PRIMARY KEY AUTO_INCREMENT,
+    role_id INT NOT NULL,
+    permission_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(permission_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_role_permission (role_id, permission_id)
+);
+
+-- Sessions Table
+CREATE TABLE sessions (
+    session_id VARCHAR(128) PRIMARY KEY,
+    user_id INT NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Enhance the audit_logs table to track authentication events
+ALTER TABLE audit_logs 
+MODIFY COLUMN action_type ENUM('Create', 'Read', 'Update', 'Delete', 'Login', 'Logout', 'Failed Login', 'Password Reset', 'Account Lock');
+
+-- Add indexes for better performance
+CREATE INDEX idx_user_username ON users(username);
+CREATE INDEX idx_user_staff ON users(staff_id);
+CREATE INDEX idx_session_user ON sessions(user_id);
+CREATE INDEX idx_user_roles_user ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role ON user_roles(role_id);
+CREATE INDEX idx_role_permissions_role ON role_permissions(role_id);
 
 -- Indexes for better performance
 CREATE INDEX idx_patient_name ON patients(last_name, first_name);
