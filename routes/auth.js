@@ -9,7 +9,6 @@ const router = express.Router();
 
 // Create connection pool
 const pool = require("../db")
-
 // Environment variables (use dotenv in production)
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '24h';
