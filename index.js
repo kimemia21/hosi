@@ -21,7 +21,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+
 app.use(morgan('dev')); // HTTP request logger
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
@@ -252,7 +252,7 @@ app.get('/api/staff/:id', async (req, res) => {
 app.post('/api/staff', async (req, res) => {
   try {
     // Basic validation
-    const requiredFields = ['first_name', 'last_name', 'role', 'phone', 'email', 'hire_date'];
+    const requiredFields = ['first_name', 'last_name', 'role', 'phone', 'email', 'hire_date', 'id_number'];
     for (const field of requiredFields) {
       if (!req.body[field]) {
         return res.status(400).json({ status: 'error', message: `Missing required field: ${field}` });
@@ -262,13 +262,19 @@ app.post('/api/staff', async (req, res) => {
     // Validate department exists if provided
     if (req.body.department_id) {
       const [dept] = await pool.query('SELECT * FROM departments WHERE department_id = ?', [req.body.department_id]);
+      const [staff] = await pool.query('SELECT * FROM staff WHERE license_number = ?', [req.body.license_number]);
+      
       if (dept.length === 0) {
         return res.status(400).json({ status: 'error', message: 'Department does not exist' });
       }
+      if (staff.length > 0) {
+        return res.status(400).json({ status: 'error', message: 'Staff exist' });
+      }
+
     }
 
     const result = await pool.query(
-      'INSERT INTO staff (first_name, last_name, role, department_id, specialization, license_number, phone, email, hire_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO staff (first_name, last_name, role, department_id, specialization, license_number, phone, email, hire_date, id_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         req.body.first_name,
         req.body.last_name,
@@ -278,7 +284,8 @@ app.post('/api/staff', async (req, res) => {
         req.body.license_number || null,
         req.body.phone,
         req.body.email,
-        req.body.hire_date
+        req.body.hire_date,
+        req.body.id_number,
       ]
     );
     
@@ -777,15 +784,23 @@ app.get('/api/departments', async (req, res) => {
         return res.status(400).json({ status: 'error', message: 'Department name is required' });
       }
   
+      // Check if department with same name exists
+      const [existingDept] = await pool.query('SELECT * FROM departments WHERE name = ?', [req.body.name]);
+      if (existingDept.length > 0) {
+        return res.status(400).json({ status: 'error', message: 'Department with this name already exists' });
+      }
+
       const result = await pool.query(
-        'INSERT INTO departments (name, description, location) VALUES (?, ?, ?)',
+        'INSERT INTO departments (name, description, location, head_of_dept, iconData, staff_id) VALUES (?, ?, ?, ?, ?, ?)',
         [
           req.body.name,
           req.body.description || null,
-          req.body.location || null
+          req.body.location || null,
+          req.body.head_of_dept || null,
+          req.body.iconData || null,
+          req.body.staff_id || null
         ]
       );
-      
       res.status(201).json({ 
         status: 'success', 
         message: 'Department created successfully', 
@@ -796,6 +811,7 @@ app.get('/api/departments', async (req, res) => {
       res.status(500).json({ status: 'error', message: 'Failed to create department', error: error.message });
     }
   });
+
   
   // Update a department
   app.put('/api/departments/:id', async (req, res) => {

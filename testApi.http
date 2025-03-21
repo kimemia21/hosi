@@ -1,12 +1,33 @@
 GET  http://192.168.88.225:3000/api/health
 Content-Type: application/json
 ###
-
-GET http://192.168.88.225:3000/api/auth/register
+POST   http://192.168.2.6:3000/api/staff
 Content-Type: application/json
 
 {
-  "staffId": "your-staff-id",
-  "username": "your-username",
-  "password": "your-password"
+  "first_name": "John",
+  "last_name": "Doe",
+  "role": "Doctor",
+  "department_id": 1,
+  "specialization": "Cardiology",
+  "license_number": "ABC123456",
+  "phone": "+1234567890",
+  "email": "john.doe@example.com",
+  "hire_date": "2025-03-19"
 }
+###
+
+GET   http://192.168.2.6:3000/api/departments
+Content-Type: application/json
+
+# {
+#   "first_name": "John",
+#   "last_name": "Doe",
+#   "role": "Doctor",
+#   "department_id": 1,
+#   "specialization": "Cardiology",
+#   "license_number": "ABC123456",
+#   "phone": "+1234567890",
+#   "email": "john.doe@example.com",
+#   "hire_date": "2025-03-19"
+# }
